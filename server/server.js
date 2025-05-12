@@ -5,31 +5,34 @@ import connectDB from './configs/db.js';
 import 'dotenv/config';
 import userRouter from './routes/userRoute.js';
 import sellerRouter from './routes/sellerRoute.js';
-import connectCloudinary from './configs/cloudinary.js';
 import productRouter from './routes/productRoute.js';
 import cartRouter from './routes/cartRoute.js';
 import addressRouter from './routes/addressRoute.js';
 import orderRouter from './routes/orderRoute.js';
+import cloudinary from './configs/cloudinary.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
 
 // Middleware configuration
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // CORS configuration
 const allowedOrigins = ['http://localhost:5173'];
 app.use(cors({
   origin: allowedOrigins,
-  credentials: true
+  credentials: true,
+  exposedHeaders: ['set-cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Database connection and server startup
 async function startServer() {
   try {
     await connectDB();
-    await connectCloudinary();
+    //await cloudinary();
     console.log('Database connected successfully');
     
     // Routes

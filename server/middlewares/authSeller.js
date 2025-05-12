@@ -1,25 +1,48 @@
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 
 const authSeller = async (req, res, next) => {
-    const { sellerToken } = req.cookies;
+  try {
+    // ✅ Get token from cookie
+    const tokenFromCookie = req.cookies?.sellerToken;
 
-    if(!sellerToken){
-        return res.json({ success: false , message: 'Not Authorized'});
+    // ✅ Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    const tokenFromHeader = authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : null;
+
+    // ✅ Use whichever token is available
+    const sellerToken = tokenFromCookie || tokenFromHeader;
+
+    if (!sellerToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication token missing',
+      });
     }
 
-    try {
-        const tokenDecode = jwt.verify(sellerToken, process.env.JWT_SECRET);
-        if(tokenDecode.email === process.env.SELLER_EMAIL ){
-            next();
-        }else{
-            return res.json({ success: false , message: 'Not Authorized'});
-        }
+    // ✅ Verify the token
+    const decoded = jwt.verify(sellerToken, process.env.JWT_SECRET);
 
-    } catch (error) {
-        console.log(error.message);
-        res.json({success: false, message: error.message})
+    // ✅ Check if email matches the seller email
+    if (decoded.email !== process.env.SELLER_EMAIL) {
+      return res.status(403).json({
+        success: false,
+        message: 'Seller not authorized',
+      });
     }
 
-}
+    // ✅ Attach seller info to request
+    req.seller = decoded;
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error.message);
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
 
 export default authSeller;

@@ -1,4 +1,4 @@
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
     userId: {type: String, required: true, ref: 'product'},
@@ -13,6 +13,6 @@ const orderSchema = new mongoose.Schema({
     isPaid: {type: Boolean, required: true, default: false}
 },{timestamps: true})
 
-const Order = mongoose.models.order || mongoose.model('address',orderSchema);
+const Order = mongoose.models.Order || mongoose.model('Order',orderSchema);
 
 export default Order;

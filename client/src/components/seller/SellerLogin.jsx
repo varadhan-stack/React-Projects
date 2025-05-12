@@ -1,15 +1,40 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../../contexts/AppContext'
+import toast from 'react-hot-toast';
+
 
 const SellerLogin = () => {
-  const {isSeller,setIsSeller,navigate} = useAppContext();
+  const {isSeller,setIsSeller,navigate,axios} = useAppContext();
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
 
-  const onSubmitHandler=(e)=>{
-    e.preventDefault();
-    setIsSeller(true);
-  }
+  const onSubmitHandler = async (e) => {
+    try {
+      e.preventDefault();
+  
+      const { data } = await axios.post(
+        '/api/seller/login',
+        { email, password },
+        { withCredentials: true } // cookie-based authentication
+      );
+  
+      if (data.success) {
+        // Optional: store token if you want to use Authorization header later
+        if (data.token) {
+          localStorage.setItem('sellerToken', data.token);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+        }
+  
+        setIsSeller(true);
+        navigate('/seller');
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+  
 
 useEffect(()=>{
     if(!isSeller){
