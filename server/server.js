@@ -22,11 +22,14 @@ app.use(cookieParser());
 // CORS configuration
 const allowedOrigins = ['http://localhost:5173'];
 app.use(cors({
-  origin: allowedOrigins,
+  origin: allowedOrigins[0],
   credentials: true,
   exposedHeaders: ['set-cookie'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Database connection and server startup
 async function startServer() {

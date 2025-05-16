@@ -2,16 +2,16 @@ import jwt from 'jsonwebtoken';
 
 const authSeller = async (req, res, next) => {
   try {
-    // ✅ Get token from cookie
+    // Get token from cookie
     const tokenFromCookie = req.cookies?.sellerToken;
 
-    // ✅ Get token from Authorization header
+    // Get token from Authorization header
     const authHeader = req.headers.authorization;
     const tokenFromHeader = authHeader && authHeader.startsWith('Bearer ')
       ? authHeader.split(' ')[1]
       : null;
 
-    // ✅ Use whichever token is available
+    // Use whichever token is available
     const sellerToken = tokenFromCookie || tokenFromHeader;
 
     if (!sellerToken) {
@@ -21,10 +21,10 @@ const authSeller = async (req, res, next) => {
       });
     }
 
-    // ✅ Verify the token
+    // Verify the token
     const decoded = jwt.verify(sellerToken, process.env.JWT_SECRET);
 
-    // ✅ Check if email matches the seller email
+    // Check if email matches the seller email
     if (decoded.email !== process.env.SELLER_EMAIL) {
       return res.status(403).json({
         success: false,
@@ -32,7 +32,7 @@ const authSeller = async (req, res, next) => {
       });
     }
 
-    // ✅ Attach seller info to request
+    // Attach seller info to request
     req.seller = decoded;
     next();
   } catch (error) {

@@ -89,72 +89,44 @@ export const register = async (req, res) => {
 
 
 // Login User: POST /api/user/login
-export const login = async (req,res) => {
-    try {
-        const { email, password} = req.body;
-        if(!email || !password){
-            return res.status(409).json({ 
-                success: false,
-                message: 'Email and password required' 
-            });
-        }
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-        const user = await User.findOne({email});
-        if(!user){
-            return res.status(409).json({ 
-                success: false,
-                message: 'Invalid email or password' 
-            });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password)
-        if(!isMatch){
-            return res.status(409).json({ 
-                success: false,
-                message: 'Invalid email or password' 
-            });
-        }
-
-        const token = jwt.sign(
-            { id: user._id }, 
-            process.env.JWT_SECRET, // Make sure this matches your .env variable
-            { expiresIn: '7d' }
-        );
-
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-
-        // Return user data (excluding password)
-        const userResponse = {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-           // createdAt: user.createdAt
-        };
-
-        return res.status(201).json({
-            success: true,
-            message: 'User registered successfully',
-            user: userResponse,
-            token // Optional: we can choose to send token in response too
-        });
-
-    } catch (error) {
-        console.log(error.message);
-        res.json({success: false, message: error.message})
+    //const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
+    console.log(user)
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
-}
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    console.log(token)
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 
 // Check Auth : /api/user/is-auth
 export const isAuth = async (req, res) => {
     try {
         // Get userId from req.user (set by auth middleware)
-        const { userId } = req.body
-        const user = await User.findById( userId ).select("-password");
+        console.log("req test")
+        const { userId } = req.userId;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        res.json({ success: true, user });
         
         if (!user) {
             return res.status(404).json({ 
