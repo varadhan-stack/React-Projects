@@ -13,7 +13,7 @@ export const AppContextProvider=({children})=>{
 
     const currency = import.meta.env.VITE_CURRENCY
     const navigate = useNavigate();
-    const [user,setUser] = useState(true);
+    const [user,setUser] = useState(null);
     const [isSeller,setIsSeller] = useState(false);
     const [showUserLogin,setShowUserLogin] = useState(false);
     const [products,setProducts] = useState([]);
@@ -119,13 +119,44 @@ export const AppContextProvider=({children})=>{
 
     useEffect(()=>{
         fetchSeller();
-        fetchUser();
+        if (document.cookie.includes('token') || localStorage.getItem('token')) {
+            fetchUser();
+        }
         fetchProducts();
     },[])
+
+    //Update database cart items
+    useEffect(() => {
+        const updateCart = async () => {
+            try {
+                // Convert cartItems object to array
+                const formattedCartItems = Object.entries(cartItems).map(([productId, quantity]) => ({
+                    productId,
+                    quantity
+                }));
+
+                const { data } = await axios.post('/api/cart/update', {
+                    userId: user._id,
+                    cartItems: formattedCartItems
+                });
+
+                if (!data.success) {
+                    toast.error(data.message);
+                }
+            } catch (error) {
+                toast.error(error.response?.data?.message || error.message);
+            }
+        };
+
+        if (user && Object.keys(cartItems).length > 0) {
+            updateCart();
+        }
+    }, [cartItems]);
+
     
     const value = {navigate, user, setUser, isSeller, setIsSeller, showUserLogin, setShowUserLogin,
         products, currency, addToCart, updateCartItem, removeFromCart, cartItems, searchQuery, setSearchQuery,
-        getCartCount, getCartAmount, axios, fetchProducts
+        getCartCount, getCartAmount, axios, fetchProducts, setCartItems
     };
     return <AppContext.Provider value={value}>
         {children}

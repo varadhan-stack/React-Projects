@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react"
 import { useAppContext } from "../contexts/AppContext";
 import { assets, dummyAddress } from "../assets/assets";
+import toast from "react-hot-toast";
 
 const Cart = () => {
     let empArry = [];
-    const {products, currency, cartItems, removeFromCart, getCartCount, updateCartItem, navigate, getCartAmount} = useAppContext();
+    const {products, currency, cartItems, removeFromCart, getCartCount, updateCartItem, navigate, getCartAmount, axios, user, setCartItems} = useAppContext();
     const [cartArray, setCartArray] = useState(empArry);
-    const [addresses, setAddresses] = useState(dummyAddress);
+    const [addresses, setAddresses] = useState([]);
     const [showAddresses, setShowAddresses] = useState(false);
-    const [selectedAddress, setSelectedAddress] = useState(dummyAddress[0]);
+    const [selectedAddress, setSelectedAddress] = useState(null);
     const [paymentOption, setPaymentOption] = useState("COD");
 
     const [showAddress, setShowAddress] = useState(false);
@@ -23,15 +24,65 @@ const Cart = () => {
         setCartArray(tempArray)
     }
 
-    const placeOrder = async () => {
-        
+    const getUserAddress = async (params) => {
+        try {
+            const { data } = await axios.get('/api/address/get');
+            console.log(data);
+            if(data.success){
+                setAddresses(data.addresses);
+                if(data.addresses.length > 0){
+                    setSelectedAddress(data.addresses[0]);
+                }
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
     }
+
+    const placeOrder = async () => {
+        try {
+            if (!selectedAddress) return toast.error("Please select an address");
+
+            if (paymentOption === "COD") {
+                const amount = getCartAmount() + getCartAmount() * 2 / 100;
+
+                const { data } = await axios.post('/api/order/cod', { 
+                    userId: user._id,
+                    items: cartArray.map(item => ({
+                        product: item._id, // ✅ Fix here
+                        quantity: item.quantity
+                    })),
+                    address: selectedAddress._id,
+                    amount, // ✅ Send valid amount
+                    status: true,
+                    paymentType: paymentOption
+                });
+
+                if (data.success) {
+                    toast.success(data.message);
+                    setCartItems({});
+                    navigate('my-orders');
+                }
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
 
     useEffect(()=>{
         if(products.length > 0 && cartItems){
             getCart();
         }
     },[products,cartItems])
+
+    useEffect(()=>{
+        if(user){
+            getUserAddress();
+        }
+    },[])
 
     
     return products.length > 0 && cartItems ?  (
@@ -130,7 +181,7 @@ const Cart = () => {
                         <span>Tax (2%)</span><span>{currency}{getCartAmount() * 2 / 100}</span>
                     </p>
                     <p className="flex justify-between text-lg font-medium mt-3">
-                        <span>Total Amount:</span><span>{currency}{getCartAmount() + getCartAmount() * 2 / 100}</span>
+                        <span>Total Amount:</span><span>{currency}{getCartAmount() + (getCartAmount() * 2 / 100)}</span>
                     </p>
                 </div>
 

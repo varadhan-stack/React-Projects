@@ -17,7 +17,10 @@ export const addAddress = async function name(req, res) {
 export const getAddress = async (req, res) => {
 
     try {
-        const { userId } = req.body;
+        const userId = req.userId;
+        //console.log("UserIDs re.UserId:", userIds);
+        //const { userId } = req.body;
+        console.log("UserID from middleware:", userId);
         const addresses = await Address.find({ userId });
         res.json({ success: true, addresses })
     } catch (error) {
