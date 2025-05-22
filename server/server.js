@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // CORS configuration
-const allowedOrigins = ['http://localhost:5173'];
+const allowedOrigins = ['http://localhost:5173', 'https://greencart-steel-ten.vercel.app'];
 app.use(cors({
   origin: allowedOrigins[0],
   credentials: true,
