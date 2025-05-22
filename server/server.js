@@ -22,7 +22,7 @@ app.use(cookieParser());
 // CORS configuration
 const allowedOrigins = ['http://localhost:5173', 'https://react-projects-fe.vercel.app'];
 app.use(cors({
-  origin: allowedOrigins[0],
+  origin: allowedOrigins[1],
   credentials: true,
   exposedHeaders: ['set-cookie'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
